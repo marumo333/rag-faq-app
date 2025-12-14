@@ -1,10 +1,14 @@
-from fastapi import FastAPI  
-from interface.api.routes import router
+from fastapi import FastAPI
+from interface.api.routes import health  
 
-app = FastAPI(title = "RAG FAQ Backend")
+app = FastAPI(title="RAG FAQ Backend")
 
-app.include_router(health_router)
+# healthルーターを登録
+app.include_router(health.router, tags=["health"])
 
+@app.get("/")
+async def root():
+    return {"message": "RAG FAQ Backend API", "status": "running"}
 
 if __name__ == "__main__":
     import uvicorn
