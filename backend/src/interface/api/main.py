@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from interface.api.routes import health, ingest, search, answer
+from interface.api.routes import health, ingest, search, answer, documents
 
 app = FastAPI(title="RAG FAQ Backend")
 
@@ -8,6 +8,7 @@ app.include_router(health.router, tags=["health"])
 app.include_router(ingest.router, tags=["ingest"])  
 app.include_router(search.router, tags=["search"])
 app.include_router(answer.router, tags=["answer"]) 
+app.include_router(documents.router, tags=["documents"])
 
 @app.get("/")
 async def root():
