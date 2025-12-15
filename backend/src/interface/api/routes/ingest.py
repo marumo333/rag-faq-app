@@ -3,13 +3,14 @@ from pydantic import BaseModel
 from uuid import UUID
 
 from application.use_cases.ingest_document import IngestDocumentUseCase
-from infrastructure.database.document_repository_inmemory import InMemoryDocumentRepository
+from infrastructure.database.document_repository_impl import SupabaseDocumentRepository
+from infrastructure.database.supabase_client import get_supabase_client
 
 router = APIRouter()
 
-# 依存性注入（簡易版）
-# 本番ではdependencies.pyで管理
-document_repository = InMemoryDocumentRepository()
+# Supabaseクライアントとリポジトリの初期化
+supabase_client = get_supabase_client()
+document_repository = SupabaseDocumentRepository(supabase_client)
 ingest_use_case = IngestDocumentUseCase(document_repository)
 
 
@@ -31,12 +32,9 @@ class IngestResponse(BaseModel):
 @router.post("/ingest", response_model=IngestResponse)
 async def ingest_document(request: IngestRequest):
     """
-    ドキュメント取り込みエンドポイント（仮実装）
+    ドキュメント取り込みエンドポイント（本番実装）
     
-    本番実装では:
-    - ファイルアップロード処理
-    - バックグラウンドタスク実行
-    - 進捗状況の追跡
+    PDFファイルからテキスト抽出→チャンク分割→Supabase保存
     """
     try:
         tenant_id = UUID(request.tenant_id)
@@ -55,6 +53,8 @@ async def ingest_document(request: IngestRequest):
             total_chunks=document.total_chunks
         )
     
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=404, detail=f"File not found: {str(e)}")
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
@@ -63,7 +63,7 @@ async def ingest_document(request: IngestRequest):
 
 @router.get("/ingest/{document_id}")
 async def get_document_status(document_id: str):
-    """ドキュメント処理状況の取得（仮実装）"""
+    """ドキュメント処理状況の取得"""
     try:
         doc_uuid = UUID(document_id)
         document = await document_repository.get_by_id(doc_uuid)
