@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/features/auth/hooks/useAuth'
 import { useFaq } from '@/features/faq/hooks/useFaq'
@@ -23,7 +24,7 @@ export default function FaqPage() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white">
         <p>読み込み中...</p>
       </div>
     )
@@ -42,45 +43,91 @@ export default function FaqPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-900 text-gray-100 flex flex-col">
       {/* ヘッダー */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
-          <h1 className="text-xl font-bold">RAG FAQ</h1>
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-gray-600">{user.email}</span>
+      <header className="border-b border-gray-800 bg-gray-900/80 backdrop-blur sticky top-0 z-10">
+        <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-2xl font-semibold text-black bg-white rounded-md px-2 py-1">
+              RAG FAQ
+            </span>
+          </div>
+          <nav className="flex items-center gap-4 text-sm">
+            <span className="text-white font-semibold">
+              FAQ
+            </span>
+            <Link href="/documents" className="text-gray-300 hover:text-white">
+              Documents
+            </Link>
+            <span className="ml-4 text-gray-400 hidden sm:inline">
+              {user.email}
+            </span>
             <button
               onClick={() => signOut()}
-              className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900"
+              className="ml-2 px-3 py-1.5 rounded-md border border-gray-700 text-xs sm:text-sm text-gray-200 hover:bg-gray-800"
             >
               ログアウト
             </button>
-          </div>
+          </nav>
         </div>
       </header>
 
-      {/* メインコンテンツ */}
-      <main className="max-w-4xl mx-auto px-4 py-8">
-        <div className="space-y-6">
-          {/* 質問フォーム */}
-          <QuestionForm onSubmit={handleQuestion} loading={faqLoading} />
+      {/* メインコンテンツ（ChatGPT風レイアウト） */}
+      <main className="flex-1 flex flex-col items-center">
+        <div className="w-full max-w-3xl flex-1 flex flex-col px-4 pt-6 pb-24">
+          {/* チャットエリア */}
+          <div className="flex-1 space-y-6 overflow-y-auto">
+            {/* 初期メッセージ */}
+            {!answer && !faqLoading && !error && (
+              <div className="flex justify-center mt-10">
+                <div className="text-center text-gray-400">
+                  <h1 className="text-3xl font-semibold mb-3">RAG FAQ へようこそ</h1>
+                  <p className="text-sm">
+                    画面下部の入力欄から質問すると、FAQ ドキュメントから回答を生成します。
+                  </p>
+                </div>
+              </div>
+            )}
 
-          {/* エラー表示 */}
-          {error && (
-            <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-red-600">エラーが発生しました: {error.message}</p>
+            {/* ユーザー入力（最後の質問だけ表示する簡易版） */}
+            {answer && (
+              <div className="flex justify-end">
+                <div className="max-w-[80%] rounded-2xl bg-emerald-600 text-white px-4 py-3 shadow">
+                  <p className="text-sm whitespace-pre-wrap">{answer.question}</p>
+                </div>
+              </div>
+            )}
+
+            {/* アシスタントの回答 */}
+            {answer && (
+              <div className="flex justify-start">
+                <div className="max-w-[80%] rounded-2xl bg-gray-800 px-4 py-3 shadow border border-gray-700">
+                  <AnswerDisplay answer={answer} />
+                </div>
+              </div>
+            )}
+
+            {/* エラー表示 */}
+            {error && (
+              <div className="flex justify-center">
+                <div className="max-w-[80%] rounded-2xl bg-red-900/40 border border-red-700 px-4 py-3 text-sm text-red-100">
+                  エラーが発生しました: {error.message}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* 入力フォーム（画面下固定） */}
+          <div className="mt-4">
+            <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-gray-900 via-gray-900/95 to-transparent pb-4 pt-2">
+              <div className="max-w-3xl mx-auto px-4">
+                <QuestionForm onSubmit={handleQuestion} loading={faqLoading} />
+                <p className="mt-2 text-[10px] text-gray-500 text-center">
+                  モデルの回答は誤っている可能性があります。重要な内容は必ず確認してください。
+                </p>
+              </div>
             </div>
-          )}
-
-          {/* 回答表示 */}
-          {answer && <AnswerDisplay answer={answer} />}
-
-          {/* 初期メッセージ */}
-          {!answer && !faqLoading && (
-            <div className="text-center py-12 text-gray-500">
-              <p>質問を入力して、FAQを検索してください</p>
-            </div>
-          )}
+          </div>
         </div>
       </main>
     </div>
