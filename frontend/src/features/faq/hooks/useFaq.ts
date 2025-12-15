@@ -5,6 +5,7 @@ import { faqService, AnswerResponse } from '../services/faqService'
 
 export function useFaq(tenantId: string) {
   const [answer, setAnswer] = useState<AnswerResponse | null>(null)
+  const [history, setHistory] = useState<AnswerResponse[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<Error | null>(null)
 
@@ -20,6 +21,7 @@ export function useFaq(tenantId: string) {
       })
       
       setAnswer(result)
+      setHistory((prev) => [...prev, result])
       return result
     } catch (err) {
       setError(err as Error)
@@ -32,10 +34,12 @@ export function useFaq(tenantId: string) {
   function clearAnswer() {
     setAnswer(null)
     setError(null)
+    setHistory([])
   }
 
   return {
     answer,
+    history,
     loading,
     error,
     askQuestion,
