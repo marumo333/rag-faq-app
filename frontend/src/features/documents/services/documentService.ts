@@ -1,0 +1,21 @@
+import { UploadResponse } from '../type'
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+
+export const documentService = {
+  async upload(file: File): Promise<UploadResponse> {
+    const formData = new FormData()
+    formData.append('file', file)
+
+    const response = await fetch(`${API_BASE_URL}/documents/upload`, {
+      method: 'POST',
+      body: formData,
+    })
+
+    if (!response.ok) {
+      throw new Error('Failed to upload document')
+    }
+
+    return response.json()
+  },
+}
