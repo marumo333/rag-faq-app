@@ -1,3 +1,5 @@
+import { supabase } from '@/features/auth/services/authService'
+
 export interface AnswerRequest {
   question: string
   tenant_id: string
@@ -16,17 +18,32 @@ export interface AnswerResponse {
   elapsed_time: number
 }
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+// Supabase Edge Function 経由で Python API の /answer を呼び出す
+// ローカル Supabase (supabase start) のデフォルトポート 54321 を想定
+const ANSWER_FUNCTION_URL =
+  process.env.NEXT_PUBLIC_ANSWER_FUNCTION_URL ||
+  'http://127.0.0.1:54321/functions/v1/rag-answer'
 
 export const faqService = {
   /**
    * 質問に対する回答を取得
    */
   async getAnswer(request: AnswerRequest): Promise<AnswerResponse> {
-    const response = await fetch(`${API_BASE_URL}/answer`, {
+    // Supabase のセッションからアクセストークンを取得
+    const {
+      data: { session },
+      error,
+    } = await supabase.auth.getSession()
+
+    if (error || !session) {
+      throw new Error('Not authenticated')
+    }
+
+    const response = await fetch(ANSWER_FUNCTION_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        Authorization: `Bearer ${session.access_token}`,
       },
       body: JSON.stringify(request),
     })
