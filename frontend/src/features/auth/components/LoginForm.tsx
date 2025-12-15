@@ -1,33 +1,16 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { useAuth } from '../hooks/useAuth'
+import { useLoginForm } from '@/features/auth/hooks/useLoginForm'
 
-export function LoginForm() {
+export default function LoginForm() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
-  const [errorMessage, setErrorMessage] = useState('')
-  
-  const { signIn } = useAuth()
-  const router = useRouter()
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
-    setErrorMessage('')
-
-    try {
-      await signIn(email, password)
-      router.push('/faq')  // FAQ画面に遷移
-    } catch (error) {
-      setErrorMessage('ログインに失敗しました。メールアドレスとパスワードを確認してください。')
-      console.error('Login error:', error)
-    } finally {
-      setIsLoading(false)
-    }
-  }
+  const { isLoading, errorMessage, handleSubmit } = useLoginForm({
+    email,
+    password,
+  })
 
   return (
     <div className="w-full max-w-md mx-auto p-6">
