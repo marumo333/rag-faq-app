@@ -14,7 +14,7 @@ class GeminiGenerationClient:
     def __init__(
         self,
         api_key: Optional[str] = None,
-        model: str = "gemini-pro"
+        model: str = "models/gemini-2.5-flash"
     ):
         """
         Args:
