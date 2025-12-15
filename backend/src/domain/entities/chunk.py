@@ -12,6 +12,7 @@ class Chunk:
     document_id: UUID
     content: str
     section: Optional[str] = None
+    position: Optional[int] = None
     page_number: Optional[int] = None
     chunk_index: int = 0
     created_at: Optional[datetime] = None
