@@ -1,11 +1,12 @@
 import logging
 import re
-from typing import List
+from typing import List, Optional
 from uuid import UUID, uuid4
+
 from domain.entities.chunk import Chunk
 
-logger = logging.getLogger(__name__)
 
+logger = logging.getLogger(__name__)
 
 class ChunkSplitter:
     """テキストをチャンクに分割するドメインサービス"""
