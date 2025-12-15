@@ -4,6 +4,7 @@ from uuid import UUID
 
 from application.use_cases.ingest_document import IngestDocumentUseCase
 from infrastructure.database.document_repository_impl import SupabaseDocumentRepository
+from infrastructure.database.embedding_repository_impl import SupabaseEmbeddingRepository
 from infrastructure.database.supabase_client import get_supabase_client
 
 router = APIRouter()
@@ -11,7 +12,11 @@ router = APIRouter()
 # Supabaseクライアントとリポジトリの初期化
 supabase_client = get_supabase_client()
 document_repository = SupabaseDocumentRepository(supabase_client)
-ingest_use_case = IngestDocumentUseCase(document_repository)
+embedding_repository = SupabaseEmbeddingRepository(supabase_client)
+ingest_use_case = IngestDocumentUseCase(
+    document_repository=document_repository,
+    embedding_repository=embedding_repository
+)
 
 
 class IngestRequest(BaseModel):
