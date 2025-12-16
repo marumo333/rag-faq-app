@@ -21,8 +21,7 @@ export interface AnswerResponse {
 // Supabase Edge Function 経由で Python API の /answer を呼び出す
 // ローカル Supabase (supabase start) のデフォルトポート 54321 を想定
 const ANSWER_FUNCTION_URL =
-  process.env.NEXT_PUBLIC_ANSWER_FUNCTION_URL ||
-  'http://127.0.0.1:54321/functions/v1/rag-answer'
+  process.env.NEXT_PUBLIC_ANSWER_FUNCTION_URL 
 
 export const faqService = {
   /**
@@ -39,7 +38,7 @@ export const faqService = {
       throw new Error('Not authenticated')
     }
 
-    const response = await fetch(ANSWER_FUNCTION_URL, {
+    const response = await fetch(ANSWER_FUNCTION_URL!, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
