@@ -1,6 +1,6 @@
 import { UploadResponse } from '../type'
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL 
 
 export const documentService = {
   async upload(file: File): Promise<UploadResponse> {
