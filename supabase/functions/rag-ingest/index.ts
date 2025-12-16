@@ -49,7 +49,7 @@ Deno.serve(async (req) => {
     console.log('Authenticated user:', user.id, user.email)
 
     // 4. Python API のURL取得
-    const pythonApiUrl = Deno.env.get('PYTHON_API_URL') || 'http://host.docker.internal:8000'
+    const pythonApiUrl = Deno.env.get('PYTHON_API_URL')
     
     // 5. リクエストボディを取得
     const requestBody = await req.text()
