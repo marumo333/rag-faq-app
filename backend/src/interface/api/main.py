@@ -6,8 +6,11 @@ app = FastAPI(title="RAG FAQ Backend")
 
 # CORS settings
 origins = [
+    # ローカル開発用
     "http://localhost:3000",
     "http://127.0.0.1:3000",
+    # 本番フロントエンド（Vercel）
+    "https://rag-faq-app.vercel.app",
 ]
 
 app.add_middleware(
