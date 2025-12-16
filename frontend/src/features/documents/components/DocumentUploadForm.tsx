@@ -34,7 +34,7 @@ export function DocumentUploadForm({ onUploaded }: DocumentUploadFormProps) {
           accept="application/pdf"
           onChange={(e) => setFile(e.target.files?.[0] ?? null)}
           disabled={uploading}
-          className="block w-full text-sm text-gray-900 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-white file:text-gray-900 hover:file:bg-gray-100"
+          className="block w-full text-sm text-white file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-white file:text-gray-900 hover:file:bg-gray-100"
         />
       </div>
       {error && (
