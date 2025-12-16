@@ -1,7 +1,22 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from interface.api.routes import health, ingest, search, answer, documents
 
 app = FastAPI(title="RAG FAQ Backend")
+
+# CORS settings
+origins = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # ルーター登録
 app.include_router(health.router, tags=["health"])
