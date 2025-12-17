@@ -19,12 +19,17 @@ export default function SignupForm() {
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    await signUpTenant({
-      email,
-      password,
-      companyName,
-      fullName: fullName || undefined,
-    });
+    try {
+      await signUpTenant({
+        email,
+        password,
+        companyName,
+        fullName: fullName || undefined,
+      });
+    } catch (err) {
+      // useTenantRegister がエラー状態を保持するため rethrow を握りつぶしてログだけ
+      console.error("Signup failed:", err);
+    }
   };
 
   return (
