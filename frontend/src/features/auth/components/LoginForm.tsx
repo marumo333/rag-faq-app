@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useState } from 'react'
 import { useLoginForm } from '@/features/auth/hooks/useLoginForm'
 
@@ -90,6 +91,15 @@ export default function LoginForm() {
               </button>
             </div>
           </form>
+
+          <div className="mt-4 text-center text-sm text-gray-600">
+            <Link
+              href="/signup"
+              className="text-indigo-600 hover:text-indigo-500 font-medium"
+            >
+              新規登録はこちら
+            </Link>
+          </div>
         </div>
       </div>
     </div>
