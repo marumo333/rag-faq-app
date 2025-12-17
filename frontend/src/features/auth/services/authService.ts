@@ -22,10 +22,23 @@ export const authService = {
   /**
    * 新規ユーザー登録
    */
-  async signUp(email: string, password: string) {
+  async signUp(
+    email: string,
+    password: string,
+    options?: {
+      companyName?: string
+      fullName?: string
+    }
+  ) {
+    const metadata = {
+      ...(options?.companyName ? { company_name: options.companyName } : {}),
+      ...(options?.fullName ? { full_name: options.fullName } : {}),
+    }
+
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
+      options: Object.keys(metadata).length > 0 ? { data: metadata } : undefined,
     })
     
     if (error) throw error
