@@ -26,6 +26,9 @@ export default function SignupForm() {
         companyName,
         fullName: fullName || undefined,
       });
+      console.info(
+        "サインアップ完了: 確認メールをチェックして認証してください。",
+      );
     } catch (err) {
       // useTenantRegister がエラー状態を保持するため rethrow を握りつぶしてログだけ
       console.error("Signup failed:", err);
