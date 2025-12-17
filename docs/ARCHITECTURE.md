@@ -1,3 +1,135 @@
+# アーキテクチャ概要
+
+## システム構成
+
+```text
+[Next.js 16 (TS/React 19)]
+   │ JWT付き fetch
+   ▼
+[Supabase Auth]
+   │ access_token
+   ▼
+[Supabase Edge Functions]
+   ├─ rag-answer (FAQ回答転送)
+   └─ rag-ingest  (必要に応じてインジェスト転送)
+        │
+        ▼
+[FastAPI RAG Backend]
+   ├─ /answer /search /ingest /documents/upload
+   ▼
+[Supabase Postgres + pgvector]
+```
+
+- 質問/回答は Edge Function で JWT 検証後、FastAPI に転送。
+- ドキュメントアップロードは Next.js → FastAPI `/documents/upload` へ直接 POST（PDF受信→一時保存→Ingest）。
+- サインアップで `company_name` をメタデータ送信し、DBトリガーで `tenants` と `profiles` を原子的に作成。
+
+---
+
+## バックエンド (FastAPI / Onion)
+
+依存方向: `domain` ← `application` ← `infrastructure` ← `interface`
+
+```
+backend/
+  src/
+    domain/
+      entities/ (document.py, chunk.py, embedding.py)
+      repositories/ (document_repository.py, embedding_repository.py)
+      services/ (chunk_splitter.py)
+
+    application/
+      dto/requests.py
+      use_cases/
+        ingest_document.py
+        search_chunks.py
+        generate_embeddings.py
+        generate_answer.py
+
+    infrastructure/
+      database/
+        supabase_client.py
+        document_repository_impl.py
+        document_repository_inmemory.py
+        embedding_repository_impl.py
+      llm/
+        embedding_client.py
+        generation_client.py
+      pdf/
+        pdf_extractor.py
+
+    interface/
+      api/
+        main.py                  # FastAPIエントリ
+        routes/
+          health.py
+          ingest.py
+          search.py
+          answer.py
+          documents.py           # /documents/upload (PDFアップロード)
+```
+
+---
+
+## フロントエンド (Next.js 16 / React 19)
+
+- ルート: `/login`, `/signup`, `/faq`, `/documents`
+- 機能別構成: `src/features/{auth,documents,faq}` + 共通 `src/shared/components`
+- 認証: `authService.signUp` が `company_name`/`full_name` をメタデータ送信。`useTenantRegister`+`SignupForm` で企業名必須のサインアップ。
+- FAQ: `useFaq` が `NEXT_PUBLIC_ANSWER_FUNCTION_URL` (Edge Function) 経由で backend `/answer` を呼び、履歴を保持して ChatUI を表示。
+- Documents: `documentService.upload` が backend `/documents/upload` に PDF をPOSTし、Ingestを起動。
+- Lint/Format: ESLint + Prettier + import/order + boundaries（features/shared/app）で typed lint を有効化。
+
+---
+
+## データフロー
+
+### ドキュメント取り込み
+
+```text
+[ユーザー]
+  → Next.js /documents から PDF アップロード
+  → FastAPI /documents/upload (PDF受信・一時保存)
+  → IngestDocument UseCase
+      - PDF抽出 (pdf_extractor)
+      - チャンク分割 (chunk_splitter)
+      - 埋め込み生成 (embedding_client)
+      - documents / faq_chunks / faq_embeddings へ保存
+  → Supabase Postgres + pgvector
+```
+
+### FAQ検索・回答
+
+```text
+[ユーザー]
+  → 質問入力 (features/faq)
+  → Supabase Edge Function rag-answer (JWT検証)
+  → FastAPI /answer
+  → SearchChunks + GenerateAnswer UseCases
+      - pgvector で類似検索
+      - 回答生成 + 出典/スコア付与
+  → フロントに回答・引用を返却
+```
+
+### サインアップ/テナント作成
+
+```text
+Next.js /signup
+  → supabase.auth.signUp (metadata: company_name, full_name)
+  → DBトリガー handle_new_tenant_user
+       - tenants に挿入
+       - profiles に tenant_id と role='admin' を付与
+```
+
+---
+
+## 技術スタック
+
+- フロント: Next.js 16 / React 19 / TypeScript / Tailwind CSS
+- 認証: Supabase Auth + Edge Functions (Deno)
+- バックエンド: FastAPI (Python 3.11+), Supabase Postgres + pgvector
+- LLM/Embedding: Gemini などの外部APIクライアント
+- デプロイ例: フロント(Vercel) / バックエンド(Render) / DB(Supabase)
 # アーキテクチャ詳細
 
 ## システム構成図
@@ -205,7 +337,7 @@ frontend/
 - **フレームワーク**: FastAPI
 - **ORM/DB**: psycopg2 / SQLAlchemy
 - **ベクトルDB**: pgvector (Supabase Postgres拡張)
-- **LLM**: Anthropic Claude / Google Gemini
+- **LLM**:  Google Gemini
 - **PDF処理**: PyPDF2 / pdfplumber
 
 ### フロントエンド

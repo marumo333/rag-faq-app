@@ -1,31 +1,33 @@
-'use client'
+"use client";
 
-import { useEffect } from 'react'
-import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { useAuth } from '@/features/auth/hooks/useAuth'
-import { DocumentUploadForm } from '@/features/documents/components/DocumentUploadForm'
+import { useEffect } from "react";
+
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+
+import { useAuth } from "@/features/auth/hooks/useAuth";
+import { DocumentUploadForm } from "@/features/documents/components/DocumentUploadForm";
 
 export default function DocumentsPage() {
-  const { user, loading, signOut } = useAuth()
-  const router = useRouter()
+  const { user, loading, signOut } = useAuth();
+  const router = useRouter();
 
   useEffect(() => {
     if (!loading && !user) {
-      router.push('/login')
+      router.push("/login");
     }
-  }, [loading, user, router])
+  }, [loading, user, router]);
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white">
         <p>読み込み中...</p>
       </div>
-    )
+    );
   }
 
   if (!user) {
-    return null
+    return null;
   }
 
   return (
@@ -41,9 +43,7 @@ export default function DocumentsPage() {
             <Link href="/faq" className="text-gray-300 hover:text-white">
               FAQ
             </Link>
-            <span className="text-white font-semibold">
-              Documents
-            </span>
+            <span className="text-white font-semibold">Documents</span>
             <span className="ml-4 text-gray-400 hidden sm:inline">
               {user.email}
             </span>
@@ -59,7 +59,9 @@ export default function DocumentsPage() {
 
       <main className="flex-1 flex flex-col items-center">
         <div className="w-full max-w-3xl px-4 py-10">
-          <h1 className="text-2xl font-semibold mb-4">ドキュメントアップロード</h1>
+          <h1 className="text-2xl font-semibold mb-4">
+            ドキュメントアップロード
+          </h1>
           <p className="text-sm text-gray-400 mb-6">
             FAQ 検索に利用する PDF ドキュメントをアップロードします。
           </p>
@@ -69,5 +71,5 @@ export default function DocumentsPage() {
         </div>
       </main>
     </div>
-  )
+  );
 }

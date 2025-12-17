@@ -1,9 +1,9 @@
-'use client'
+"use client";
 
-import { AnswerResponse } from '../services/faqService'
+import { AnswerResponse } from "../services/faqService";
 
 interface AnswerDisplayProps {
-  answer: AnswerResponse
+  answer: AnswerResponse;
 }
 
 export function AnswerDisplay({ answer }: AnswerDisplayProps) {
@@ -30,7 +30,9 @@ export function AnswerDisplay({ answer }: AnswerDisplayProps) {
 
       {/* 引用・出典 */}
       <div className="mt-3 border-t border-gray-800 pt-3">
-        <h4 className="text-xs font-semibold text-gray-300 mb-2">引用された箇所</h4>
+        <h4 className="text-xs font-semibold text-gray-300 mb-2">
+          引用された箇所
+        </h4>
         <div className="space-y-2">
           {answer.sources.map((source, index) => (
             <div
@@ -38,21 +40,18 @@ export function AnswerDisplay({ answer }: AnswerDisplayProps) {
               className="rounded-md bg-amber-900/30 border border-amber-700/60 px-3 py-2 text-xs text-amber-50"
             >
               <div className="flex items-center justify-between mb-1">
-                <span className="font-semibold">
-                  出典 {index + 1}
-                </span>
+                <span className="font-semibold">出典 {index + 1}</span>
                 <span className="text-[10px] text-amber-200">
                   スコア {source.score.toFixed(2)}
                 </span>
               </div>
               <p className="whitespace-pre-wrap">
-                {source.section || '引用テキスト情報がありません'}
+                {source.section || "引用テキスト情報がありません"}
               </p>
             </div>
           ))}
         </div>
       </div>
     </article>
-  )
+  );
 }
-

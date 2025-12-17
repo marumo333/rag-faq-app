@@ -1,8 +1,8 @@
-import { ButtonHTMLAttributes } from 'react'
+import { ButtonHTMLAttributes } from "react";
 
-type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement>
+type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement>;
 
-export function Button({ children, className = '', ...props }: ButtonProps) {
+export function Button({ children, className = "", ...props }: ButtonProps) {
   return (
     <button
       {...props}
@@ -10,5 +10,5 @@ export function Button({ children, className = '', ...props }: ButtonProps) {
     >
       {children}
     </button>
-  )
+  );
 }
