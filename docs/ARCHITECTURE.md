@@ -26,9 +26,11 @@
 
 ---
 
-## バックエンド (FastAPI / Onion)
+## バックエンド (FastAPI / Onion + Clean/Hexagonal要素)
 
-依存方向: `domain` ← `application` ← `infrastructure` ← `interface`
+- 基本は Onion の依存方向: `domain` ← `application` ← `infrastructure` ← `interface`
+- `application/use_cases` を中心にユースケース層を分離しており、Clean/Hexagonal のポート/アダプタ的要素を取り入れている
+- `infrastructure` はリポジトリ実装や外部I/Oのアダプタとして機能し、`domain`/`application` への依存を一方向に保持する
 
 ```
 backend/
