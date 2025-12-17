@@ -1,6 +1,7 @@
 # RAG FAQ App (Supabase + Python + Next.js)
 
-ユーザー向けFAQを、PDF/ドキュメントからRAG（Retrieval-Augmented Generation）で自動回答するアプリケーション。
+ユーザー向けFAQを、PDF/ドキュメントからRAG（Retrieval-Augmented Generation）で自動回答するアプリケーション。  
+toB向けに自社プロダクトを提供する企業のサポートチームが、社内向けFAQとして利用する想定です。
 
 ## 技術スタック
 
