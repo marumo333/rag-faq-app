@@ -69,3 +69,7 @@ toB向けに自社プロダクトを提供する企業のサポートチーム�
 ## 詳細情報
 
 詳細なタスク・Milestoneは `Backlog.md` を参照。
+
+## License
+
+MIT License (see `LICENSE`).
