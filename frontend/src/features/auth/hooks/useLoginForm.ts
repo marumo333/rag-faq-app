@@ -1,40 +1,44 @@
-'use client'
+"use client";
 
-import { useState, type FormEvent } from 'react'
-import { useRouter } from 'next/navigation'
-import { useAuth } from './useAuth'
+import { useState, type FormEvent } from "react";
+
+import { useRouter } from "next/navigation";
+
+import { useAuth } from "./useAuth";
 
 interface UseLoginFormParams {
-  email: string
-  password: string
+  email: string;
+  password: string;
 }
 
 export function useLoginForm({ email, password }: UseLoginFormParams) {
-  const [isLoading, setIsLoading] = useState(false)
-  const [errorMessage, setErrorMessage] = useState('')
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
-  const { signIn } = useAuth()
-  const router = useRouter()
+  const { signIn } = useAuth();
+  const router = useRouter();
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    setIsLoading(true)
-    setErrorMessage('')
+    e.preventDefault();
+    setIsLoading(true);
+    setErrorMessage("");
 
     try {
-      await signIn(email, password)
-      router.push('/faq') // FAQ画面に遷移
+      await signIn(email, password);
+      router.push("/faq"); // FAQ画面に遷移
     } catch (error) {
-      setErrorMessage('ログインに失敗しました。メールアドレスとパスワードを確認してください。')
-      console.error('Login error:', error)
+      setErrorMessage(
+        "ログインに失敗しました。メールアドレスとパスワードを確認してください。",
+      );
+      console.error("Login error:", error);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   return {
     isLoading,
     errorMessage,
     handleSubmit,
-  }
+  };
 }

@@ -1,9 +1,9 @@
-import { createClient } from '@supabase/supabase-js'
+import { createClient } from "@supabase/supabase-js";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 export const authService = {
   /**
@@ -13,10 +13,10 @@ export const authService = {
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
-    })
-    
-    if (error) throw error
-    return data
+    });
+
+    if (error) throw error;
+    return data;
   },
 
   /**
@@ -26,48 +26,49 @@ export const authService = {
     email: string,
     password: string,
     options?: {
-      companyName?: string
-      fullName?: string
-    }
+      companyName?: string;
+      fullName?: string;
+    },
   ) {
     const metadata = {
       ...(options?.companyName ? { company_name: options.companyName } : {}),
       ...(options?.fullName ? { full_name: options.fullName } : {}),
-    }
+    };
 
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: Object.keys(metadata).length > 0 ? { data: metadata } : undefined,
-    })
-    
-    if (error) throw error
-    return data
+      options:
+        Object.keys(metadata).length > 0 ? { data: metadata } : undefined,
+    });
+
+    if (error) throw error;
+    return data;
   },
 
   /**
    * ログアウト
    */
   async signOut() {
-    const { error } = await supabase.auth.signOut()
-    if (error) throw error
+    const { error } = await supabase.auth.signOut();
+    if (error) throw error;
   },
 
   /**
    * 現在のセッション取得
    */
   async getSession() {
-    const { data, error } = await supabase.auth.getSession()
-    if (error) throw error
-    return data.session
+    const { data, error } = await supabase.auth.getSession();
+    if (error) throw error;
+    return data.session;
   },
 
   /**
    * 現在のユーザー取得
    */
   async getUser() {
-    const { data, error } = await supabase.auth.getUser()
-    if (error) throw error
-    return data.user
+    const { data, error } = await supabase.auth.getUser();
+    if (error) throw error;
+    return data.user;
   },
-}
+};

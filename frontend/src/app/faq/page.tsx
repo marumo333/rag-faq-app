@@ -1,46 +1,48 @@
-'use client'
+"use client";
 
-import { useEffect } from 'react'
-import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { useAuth } from '@/features/auth/hooks/useAuth'
-import { useFaq } from '@/features/faq/hooks/useFaq'
-import { QuestionForm } from '@/features/faq/components/QuestionForm'
-import { AnswerDisplay } from '@/features/faq/components/AnswerDisplay'
+import { useEffect } from "react";
+
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+
+import { useAuth } from "@/features/auth/hooks/useAuth";
+import { AnswerDisplay } from "@/features/faq/components/AnswerDisplay";
+import { QuestionForm } from "@/features/faq/components/QuestionForm";
+import { useFaq } from "@/features/faq/hooks/useFaq";
 
 export default function FaqPage() {
-  const { user, loading: authLoading, signOut } = useAuth()
-  const router = useRouter()
-  
+  const { user, loading: authLoading, signOut } = useAuth();
+  const router = useRouter();
+
   // 仮のテナントID（実際はuserから取得）
-  const tenantId = '188d1388-ae85-4753-b640-eea55e9d83fe'
-  const { history, loading: faqLoading, error, askQuestion } = useFaq(tenantId)
+  const tenantId = "188d1388-ae85-4753-b640-eea55e9d83fe";
+  const { history, loading: faqLoading, error, askQuestion } = useFaq(tenantId);
 
   useEffect(() => {
     if (!authLoading && !user) {
-      router.push('/login')
+      router.push("/login");
     }
-  }, [user, authLoading, router])
+  }, [user, authLoading, router]);
 
   if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white">
         <p>読み込み中...</p>
       </div>
-    )
+    );
   }
 
   if (!user) {
-    return null
+    return null;
   }
 
   const handleQuestion = async (question: string) => {
     try {
-      await askQuestion(question)
+      await askQuestion(question);
     } catch (err) {
-      console.error('Failed to get answer:', err)
+      console.error("Failed to get answer:", err);
     }
-  }
+  };
 
   return (
     <div className="min-h-screen bg-gray-900 text-gray-100 flex flex-col">
@@ -53,9 +55,7 @@ export default function FaqPage() {
             </span>
           </div>
           <nav className="flex items-center gap-4 text-sm">
-            <span className="text-white font-semibold">
-              FAQ
-            </span>
+            <span className="text-white font-semibold">FAQ</span>
             <Link href="/documents" className="text-gray-300 hover:text-white">
               Documents
             </Link>
@@ -107,9 +107,12 @@ export default function FaqPage() {
               {history.length === 0 && !faqLoading && !error && (
                 <div className="flex justify-center mt-10">
                   <div className="text-center text-gray-400">
-                    <h1 className="text-3xl font-semibold mb-3">RAG FAQ へようこそ</h1>
+                    <h1 className="text-3xl font-semibold mb-3">
+                      RAG FAQ へようこそ
+                    </h1>
                     <p className="text-sm">
-                      画面下部の入力欄から質問すると、FAQ ドキュメントから回答を生成します。
+                      画面下部の入力欄から質問すると、FAQ
+                      ドキュメントから回答を生成します。
                     </p>
                   </div>
                 </div>
@@ -121,7 +124,9 @@ export default function FaqPage() {
                   {/* ユーザー質問バブル */}
                   <div className="flex justify-end">
                     <div className="max-w-[80%] rounded-2xl bg-emerald-600 text-white px-4 py-3 shadow">
-                      <p className="text-sm whitespace-pre-wrap">{item.question}</p>
+                      <p className="text-sm whitespace-pre-wrap">
+                        {item.question}
+                      </p>
                     </div>
                   </div>
                   {/* 回答カード */}
@@ -155,7 +160,10 @@ export default function FaqPage() {
             <div className="mt-4">
               <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-gray-900 via-gray-900/95 to-transparent pb-4 pt-2">
                 <div className="max-w-3xl mx-auto px-4">
-                  <QuestionForm onSubmit={handleQuestion} loading={faqLoading} />
+                  <QuestionForm
+                    onSubmit={handleQuestion}
+                    loading={faqLoading}
+                  />
                   <p className="mt-2 text-[10px] text-gray-500 text-center">
                     モデルの回答は誤っている可能性があります。重要な内容は必ず確認してください。
                   </p>
@@ -166,6 +174,5 @@ export default function FaqPage() {
         </div>
       </main>
     </div>
-  )
+  );
 }
-

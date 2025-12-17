@@ -1,29 +1,31 @@
-'use client'
+"use client";
 
-import { FormEvent, useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { useTenantRegister } from '../hooks/useTenantRegister'
+import { FormEvent, useState } from "react";
+
+import { useRouter } from "next/navigation";
+
+import { useTenantRegister } from "../hooks/useTenantRegister";
 
 export default function SignupForm() {
-  const router = useRouter()
+  const router = useRouter();
   const { signUpTenant, loading, error } = useTenantRegister({
-    onSuccess: () => router.push('/login'),
-  })
+    onSuccess: () => router.push("/login"),
+  });
 
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [companyName, setCompanyName] = useState('')
-  const [fullName, setFullName] = useState('')
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [companyName, setCompanyName] = useState("");
+  const [fullName, setFullName] = useState("");
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
+    e.preventDefault();
     await signUpTenant({
       email,
       password,
       companyName,
       fullName: fullName || undefined,
-    })
-  }
+    });
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
@@ -43,7 +45,10 @@ export default function SignupForm() {
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Company Name */}
             <div>
-              <label htmlFor="company" className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="company"
+                className="block text-sm font-medium text-gray-700"
+              >
                 企業名（テナント名）
               </label>
               <div className="mt-1">
@@ -62,7 +67,10 @@ export default function SignupForm() {
 
             {/* Full Name */}
             <div>
-              <label htmlFor="fullName" className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="fullName"
+                className="block text-sm font-medium text-gray-700"
+              >
                 氏名（任意）
               </label>
               <div className="mt-1">
@@ -80,7 +88,10 @@ export default function SignupForm() {
 
             {/* Email */}
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="email"
+                className="block text-sm font-medium text-gray-700"
+              >
                 Email address
               </label>
               <div className="mt-1">
@@ -100,7 +111,10 @@ export default function SignupForm() {
 
             {/* Password */}
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium text-gray-700"
+              >
                 Password
               </label>
               <div className="mt-1">
@@ -132,7 +146,7 @@ export default function SignupForm() {
                 disabled={loading}
                 className="w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {loading ? '登録中...' : 'Sign up'}
+                {loading ? "登録中..." : "Sign up"}
               </button>
             </div>
           </form>
@@ -140,7 +154,7 @@ export default function SignupForm() {
           <div className="mt-4 text-center text-sm text-gray-600">
             <button
               type="button"
-              onClick={() => router.push('/login')}
+              onClick={() => router.push("/login")}
               className="text-indigo-600 hover:text-indigo-500 font-medium"
             >
               既にアカウントをお持ちの方はこちら
@@ -149,5 +163,5 @@ export default function SignupForm() {
         </div>
       </div>
     </div>
-  )
+  );
 }

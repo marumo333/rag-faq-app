@@ -1,17 +1,19 @@
-'use client'
+"use client";
 
-import Link from 'next/link'
-import { useState } from 'react'
-import { useLoginForm } from '@/features/auth/hooks/useLoginForm'
+import { useState } from "react";
+
+import Link from "next/link";
+
+import { useLoginForm } from "@/features/auth/hooks/useLoginForm";
 
 export default function LoginForm() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
   const { isLoading, errorMessage, handleSubmit } = useLoginForm({
     email,
     password,
-  })
+  });
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
@@ -87,7 +89,7 @@ export default function LoginForm() {
                 disabled={isLoading}
                 className="w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isLoading ? 'サインイン中...' : 'Sign in'}
+                {isLoading ? "サインイン中..." : "Sign in"}
               </button>
             </div>
           </form>
@@ -103,5 +105,5 @@ export default function LoginForm() {
         </div>
       </div>
     </div>
-  )
+  );
 }

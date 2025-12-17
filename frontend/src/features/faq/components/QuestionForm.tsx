@@ -1,14 +1,14 @@
-'use client'
+"use client";
 
-import { useQuestionForm } from '@/features/faq/hooks/useQuestionForm'
+import { useQuestionForm } from "@/features/faq/hooks/useQuestionForm";
 
 interface QuestionFormProps {
-  onSubmit: (question: string) => void
-  loading?: boolean
+  onSubmit: (question: string) => void;
+  loading?: boolean;
 }
 
 export function QuestionForm({ onSubmit, loading = false }: QuestionFormProps) {
-  const { question, setQuestion, handleSubmit } = useQuestionForm({ onSubmit })
+  const { question, setQuestion, handleSubmit } = useQuestionForm({ onSubmit });
 
   return (
     <form onSubmit={handleSubmit} className="w-full">
@@ -26,9 +26,9 @@ export function QuestionForm({ onSubmit, loading = false }: QuestionFormProps) {
           disabled={loading || !question.trim()}
           className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {loading ? '処理中...' : '質問'}
+          {loading ? "処理中..." : "質問"}
         </button>
       </div>
     </form>
-  )
+  );
 }
