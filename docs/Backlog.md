@@ -267,6 +267,42 @@
 
 ---
 
+### [M3][P0][BE/DB] テナント新規開設トリガーの実装 (Auth連携)
+
+**概要**:
+新規登録（Sign Up）時に、入力された「企業名」を元に自動的に `tenants` レコードを作成し、管理者ユーザーと紐付けるデータベーストリガーを実装する。
+フロントエンドは `supabase.auth.signUp()` にメタデータを渡すだけで、DB層で原子的にテナント作成を完結させる。
+
+**目的**:
+- 企業と管理者の作成を単一トランザクションで保証し、データ不整合（Orphaned Record）を防ぐ。
+- フロントエンドの実装コストを最小化する。
+
+**実装仕様 (Technical Spec)**:
+
+1. **DBトリガー関数 (`public.handle_new_tenant_user`)**
+   - `auth.users` の INSERT 後に発火。
+   - `new.raw_user_meta_data->>'company_name'` が存在する場合のみ実行。
+   - `tenants` に INSERT → 生成された ID を取得。
+   - `public.users` (profiles) に `tenant_id` と `role='admin'` をセットして INSERT。
+   - **重要**: 関数は `SECURITY DEFINER` で定義すること（新規ユーザーはまだ権限がないため）。
+
+2. **フロントエンド (`features/auth`)**
+   - Sign Up 時に `options.data.company_name` を送信するよう実装。
+
+**タスク**:
+- [ ] DB: `supabase/migrations/` にトリガー関数とTrigger定義のSQLを作成
+- [ ] DB: RLSポリシーが新規作成直後のユーザーにも正しく適用されるか確認
+- [ ] FE: `useTenantRegister` フックの実装（`signUp` 呼び出し）
+- [ ] Test: 正常系（テナント作成成功）と異常系（テナント名重複などでロールバックされるか）の確認
+
+**完了条件**:
+- [ ] フロントエンドからサインアップ後、`tenants` と `public.users` にレコードが作成されている
+- [ ] 作成されたユーザーの `tenant_id` が正しい企業を指している
+
+**ラベル**: `area:backend` `area:auth` `type:backend` `prio:P0` `size:S`
+
+---
+
 ## 参考
 
 - 既存PoC用 Backlog (実現可能性推定アプリ) の構成・ラベル付けを流用。:contentReference[oaicite:2]{index=2}  
