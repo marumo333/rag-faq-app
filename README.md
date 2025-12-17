@@ -11,17 +11,26 @@
 ## アーキテクチャ概要
 
 ```text
-[Next.js (TS)]
-   │  JWT
+[Next.js 16 (TS/React 19)]
+   │ JWT付き fetch
    ▼
-[Supabase Auth + Edge Functions]
-   │  HTTP (内部API)
+[Supabase Auth]
+   │ access_token
    ▼
-[Python RAG Backend (Onion)]
-   │  SQL (pgvector)
+[Supabase Edge Functions]
+   ├─ rag-answer (FAQ回答転送)
+   └─ rag-ingest  (必要に応じてインジェスト転送)
+        │
+        ▼
+[FastAPI RAG Backend]
+   ├─ /answer /search /ingest /documents/upload
    ▼
 [Supabase Postgres + pgvector]
 ```
+
+- 質問/回答は Edge Function で JWT 検証後に FastAPI へ転送。
+- ドキュメントアップロードは Next.js → FastAPI `/documents/upload` へ直接 POST（PDF受信→一時保存→Ingest）。
+- サインアップで `company_name` メタデータを送信し、DBトリガーで `tenants` と `profiles` を原子的に作成。
 
 ## プロジェクト構成
 
@@ -31,11 +40,12 @@
 - `src/features/faq` - FAQ機能
 - `src/features/documents` - ドキュメント管理
 
-### `backend-python/` (Onion Architecture)
-- `domain/` - Document, Chunk, Embedding, IngestJob などのドメインモデル
-- `application/` - UseCase（IngestDocument, ReindexDocument など）
-- `infrastructure/` - pgvectorリポジトリ, LLMクライアント(Claude/Gemini), PDF抽出
-- `interface/` - FastAPI などHTTPインターフェース
+### `backend/` (Onion + Clean/Hexagonal 要素)
+- 依存方向: `domain` ← `application` ← `infrastructure` ← `interface`
+- `domain/` … entities/repositories/services（純粋なモデルと契約）
+- `application/use_cases/` … ingest/search/generate_embeddings/generate_answer などユースケース層
+- `infrastructure/` … Supabase/pgvectorリポジトリ実装、LLMクライアント、PDF抽出
+- `interface/api/` … FastAPIエンドポイント（/health, /ingest, /search, /answer, /documents/upload）
 
 ### `supabase/`
 - スキーマ、RLSポリシー
@@ -44,16 +54,12 @@
 ## 主な機能
 
 ### ドキュメント処理
-PDF/Wordをアップロードすると自動で以下の処理を実行：
-1. テキスト抽出
-2. チャンク分割
-3. 埋め込み生成
-4. pgvector保存
+- Next.js `/documents` から PDF をアップロード → FastAPI `/documents/upload` で受信
+- PDF抽出 → チャンク分割 → 埋め込み生成 → pgvectorへ保存
 
 ### FAQ回答生成
-ユーザーの質問に対して以下を実行：
-1. Top-Kベクトル検索
-2. 根拠付き回答（引用＋出典メタ）を生成
+- Edge Function rag-answer で JWT を検証し、FastAPI `/answer` へ転送
+- Top-K ベクトル検索 → 回答生成（引用・スコア付き）を返却
 
 ### セキュリティ
 - すべてのAPIを Supabase Auth の認証下に配置
