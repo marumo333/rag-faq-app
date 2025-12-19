@@ -109,45 +109,69 @@ class GeminiGenerationClient:
     
     def _format_context(self, chunks: List[dict], max_chars: int = 8000) -> Tuple[str, int]:
         """
-        チャンクリストをコンテキスト文字列に整形
-        Returns:
-            Tuple[str, int]: (整形済みテキスト, 使用したチャンク数)
+        チャンクリストをコンテキスト文字列に整形（文字数制限で切り詰め）
         """
         if not chunks:
             return "関連情報が見つかりませんでした。", 0
-        
-        context_parts: list[str] = []
+
+        context_parts: List[str] = []
         seen_content: set[str] = set()
         current_len = 0
         used_count = 0
-        
+
         for i, chunk in enumerate(chunks, start=1):
-            content = chunk.get('content', '').strip()
-        
-            # 空または重複チェック
+            content = chunk.get("content", "").strip()
+            
             if not content or content in seen_content:
                 continue
-            
+
             seen_content.add(content)
             
-            # セクション情報
-            section = chunk.get('metadata', {}).get('section') or '情報なし'
-            part = f"[参考情報 {i}] (セクション: {section})\n{content}"
+            section = chunk.get("metadata", {}).get("section") or "情報なし"
+            # ヘッダー部分を作成
+            header = f"[参考情報 {i}] (セクション: {section})\n"
             
-            # 追加後の長さを計算
-            additional = len(part) + (2 if context_parts else 0) # 改行文を加味
+            # 追加に必要な基本文字数（ヘッダー + 改行など）
+            # リストが空でない場合は、前の要素との間の改行(\n\n)として+2文字必要
+            separator_len = 2 if context_parts else 0
+            
+            # このチャンクを追加したときの合計予想長
+            estimated_len = current_len + separator_len + len(header) + len(content)
 
-            # 文字数制限を超える場合は切り捨ててループ終了
-            if current_len + additional > max_chars:
-                self.logger.warning(f"Context truncated at chunk {i} (limit: {max_chars} chars)")
+            if estimated_len <= max_chars:
+                # 制限内ならそのまま追加
+                part = f"{header}{content}"
+                context_parts.append(part)
+                current_len = estimated_len
+                used_count += 1
+            else:
+                # 制限を超える場合：残り容量に合わせてコンテンツを切り詰める
+                remaining_chars = max_chars - (current_len + separator_len + len(header))
+                
+                if remaining_chars > 0:
+                    # ヘッダーが入る余地があり、かつコンテンツも少しは入る場合
+                    truncated_content = content[:remaining_chars] + "...(省略)"
+                    part = f"{header}{truncated_content}"
+                    context_parts.append(part)
+                    used_count += 1
+                    
+                    self.logger.warning(
+                        f"Chunk {i} truncated to fit context limit. "
+                        f"(Used {remaining_chars} chars of content)"
+                    )
+                else:
+                    # ヘッダーすら入らないほどギリギリなら、このチャンクは諦める
+                    self.logger.warning(f"Context full. Stopped before chunk {i}.")
+                
+                # 制限に達したので、これ以降のチャンクは処理せず終了
                 break
-            
-            context_parts.append(part)
-            current_len += additional
-            used_count += 1
 
-        final_text = "\n\n".join(context_parts) if context_parts else "関連情報が見つかりませんでした。"
-        return final_text, used_count
+        if not context_parts:
+            # 検索結果はあったが、メタデータ等が大きすぎて1つも本文が入らなかった極端なケース
+            # (通常8000文字あればこのルートには来ないはずですが安全策として)
+            return "関連情報は見つかりましたが、コンテキスト制限により内容を含められませんでした。", 0
+
+        return "\n\n".join(context_parts), used_count
         
     
     def _build_prompt(
