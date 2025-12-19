@@ -302,6 +302,63 @@
 
 ---
 
+
+### [M3][BE/AI] コスト最適化: generation_client.py のリファクタリング
+
+**概要**:
+
+現在、FAQ 2回のリクエストで約 $0.51 のコストが発生しており、実運用に向けてコストが高すぎます。
+主な原因は、RAG検索でヒットした大量のコンテキストを無制限にプロンプトに含めていることと、システムプロンプトの結合方法にあると考えられます。
+`generation_client.py` を改修し、トークン消費量の制御とモデル設定の最適化を行います。
+
+**現状の課題**:
+
+* コンテキスト（検索結果チャンク）の文字数上限がないため、入力トークンが肥大化しやすい。
+* `system_prompt` をユーザー入力と単純結合しているため、モデルの指示追従精度が最適化されていない可能性がある。
+* デフォルトモデルがコード上で明示されておらず、呼び出し元次第では高価な Pro モデルが使われるリスクがある。
+
+**変更内容**:
+
+`src/infrastructure/llm/generation_client.py` に対して以下の変更を行う。
+
+1. **システムプロンプトの分離**
+* `genai.GenerativeModel` 初期化時に `system_instruction` 引数として渡す形に変更する。
+
+
+2. **コンテキストサイズの制限 (Hard Limit)**
+* `_format_context` メソッドに `max_chars` 引数（デフォルト 15,000文字程度）を追加し、超過分は切り捨てる処理を入れる。
+
+
+3. **デフォルトモデルの変更**
+* デフォルトを `gemini-1.5-flash` （または `gemini-2.0-flash-lite-preview`）に変更し、コストを抑制する。
+
+
+4. **監査用ログの追加**
+* `count_tokens` APIを使用し、リクエスト前の「推定入力トークン数」をINFOログに出力する。
+
+
+
+**タスク**:
+
+* [ ] `GeminiGenerationClient` の `__init__` で `system_instruction` を設定するように修正
+* [ ] `_format_context` に文字数カウントと break 処理を追加
+* [ ] `generate_answer` 内で `count_tokens` を呼び出し、ログ出力する
+* [ ] 戻り値の dict に `input_tokens` を含める（将来の監査ログ保存用）
+
+**完了条件(DoD)**:
+
+* [ ] 指定した文字数（例: 15,000文字）を超えるコンテキストを渡した際、エラーにならず適切に切り捨てられること。
+* [ ] 実行ログに `Estimated Input Tokens: xxxx` が出力されていること。
+* [ ] 修正後もFAQ回答が正常に生成されること。
+
+**関連情報**:
+
+* 対象ファイル: `backend-python/src/infrastructure/llm/generation_client.py`
+* ラベル: `area:generation`, `area:ops`, `type:improvement`, `prio:P0`, `size:S`
+
+---
+
+
 ## 参考
 
 - 既存PoC用 Backlog (実現可能性推定アプリ) の構成・ラベル付けを流用。:contentReference[oaicite:2]{index=2}  
