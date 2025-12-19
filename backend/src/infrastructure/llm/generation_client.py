@@ -1,6 +1,6 @@
 import logging
 import os
-from typing import List, Optional
+from typing import List, Optional, Tuple
 import google.generativeai as genai
 from dotenv import load_dotenv
 
@@ -14,7 +14,8 @@ class GeminiGenerationClient:
     def __init__(
         self,
         api_key: Optional[str] = None,
-        model: str = "models/gemini-2.5-flash"
+        model: str = "models/gemini-2.5-flash-lite",
+        system_instruction: Optional[str] = None
     ):
         """
         Args:
@@ -26,44 +27,46 @@ class GeminiGenerationClient:
             raise ValueError("GOOGLE_API_KEY is required")
         
         genai.configure(api_key=self.api_key)
+        
+        # システムプロンプトの準備
+        base_system = system_instruction or self._get_default_system_prompt()
+        self.system_instruction = base_system
         self.model_name = model
-        self.model = genai.GenerativeModel(model)
+        
+        # GenerativeModelの初期化
+        # ここで system_instruction を渡しているため、generate_content 時には不要です
+        self.model = genai.GenerativeModel(
+            model_name=model,
+            system_instruction=base_system
+        )
         self.logger = logger
     
     def generate_answer(
         self,
         question: str,
-        context_chunks: List[dict],
-        system_prompt: Optional[str] = None
+        context_chunks: List[dict]
     ) -> dict:
         """
         質問に対してコンテキストを使用して回答を生成
-        
-        Args:
-            question: ユーザーの質問
-            context_chunks: 検索されたチャンクのリスト
-            system_prompt: システムプロンプト（省略時はデフォルト使用）
-            
-        Returns:
-            dict: 回答テキストと使用したチャンク情報
         """
         try:
-            # システムプロンプトの設定
-            if system_prompt is None:
-                system_prompt = self._get_default_system_prompt()
-            
-            # コンテキストの整形
-            formatted_context = self._format_context(context_chunks)
+            # コンテキストの整形（実際に使用されたチャンク数を受け取る）
+            formatted_context, used_count = self._format_context(context_chunks)
             
             # プロンプトの構築
             prompt = self._build_prompt(
-                system_prompt=system_prompt,
                 context=formatted_context,
                 question=question
             )
             
+            # トークン数の見積もり
+            tokens_info = self.model.count_tokens(prompt)
+            input_tokens = tokens_info.total_tokens
+            
+            self.logger.info(f"Estimated Input Tokens: {input_tokens}")
             self.logger.info(f"Generating answer for question: '{question}'")
-            self.logger.debug(f"Using {len(context_chunks)} context chunks")
+            # 検索ヒット数と、実際にコンテキストに入った数を分けてログ出力
+            self.logger.debug(f"Using {used_count} chunks (retrieved {len(context_chunks)})")
             
             # Gemini APIで回答生成
             response = self.model.generate_content(prompt)
@@ -75,7 +78,8 @@ class GeminiGenerationClient:
             return {
                 "answer": answer_text,
                 "model": self.model_name,
-                "chunks_used": len(context_chunks)
+                "chunks_used": used_count, # 実際に使用された数（監査用）
+                "input_tokens": input_tokens
             }
             
         except Exception as e:
@@ -103,54 +107,95 @@ class GeminiGenerationClient:
 - 必要に応じて箇条書きを使用してください。
 """
     
-    def _format_context(self, chunks: List[dict]) -> str:
+    def _format_context(self, chunks: List[dict], max_chars: int = 8000) -> Tuple[str, int]:
         """
-        チャンクリストをコンテキスト文字列に整形
-        
-        重複や矛盾を抑制するために：
-        - 類似度の高い順にソート済み
-        - セクション情報を含める
-        - チャンクIDを参照として保持
+        チャンクリストをコンテキスト文字列に整形（文字数制限で切り詰め）
+        Returns:
+            Tuple[str, int]: (整形済みテキスト, 使用したチャンク数)
         """
         if not chunks:
-            return "関連情報が見つかりませんでした。"
-        
-        context_parts = []
-        seen_content = set()
-        
+            return "関連情報が見つかりませんでした。", 0
+
+        context_parts: List[str] = []
+        seen_content: set[str] = set()
+        current_len = 0
+        used_count = 0
+
         for i, chunk in enumerate(chunks, start=1):
-            content = chunk.get('content', '').strip()
+            content = chunk.get("content", "").strip()
             
-            # 重複チェック（完全一致）
-            if content in seen_content:
+            if not content or content in seen_content:
                 continue
-            
+
             seen_content.add(content)
             
-            # セクション情報
-            section = chunk.get('metadata', {}).get('section') or '情報なし'
+            section = chunk.get("metadata", {}).get("section") or "情報なし"
+            # ヘッダー部分を作成
+            header = f"[参考情報 {i}] (セクション: {section})\n"
             
-            # フォーマット
-            context_parts.append(
-                f"[参考情報 {i}] (セクション: {section})\n{content}"
-            )
+            # 追加に必要な基本文字数（前の要素との間の改行 \n\n を考慮）
+            separator_len = 2 if context_parts else 0
+            
+            # このチャンクを追加したときの合計予想長
+            estimated_len = current_len + separator_len + len(header) + len(content)
+
+            if estimated_len <= max_chars:
+                # 制限内ならそのまま追加
+                part = f"{header}{content}"
+                context_parts.append(part)
+                current_len = estimated_len
+                used_count += 1
+            else:
+                # 制限を超える場合：残り容量に合わせてコンテンツを切り詰める
+                suffix = "...(省略)"
+                
+                # コンテンツ部分（サフィックス含む）に使える残り文字数を計算
+                # max_chars - (現在長 + セパレータ + ヘッダー)
+                available_for_content_block = max_chars - (current_len + separator_len + len(header))
+                
+                # サフィックス分を引いて、実際のコンテンツをスライスする長さを決定
+                slice_len = available_for_content_block - len(suffix)
+                
+                if slice_len > 0:
+                    # コンテンツを少しでも表示できる場合のみ追加
+                    truncated_content = content[:slice_len] + suffix
+                    part = f"{header}{truncated_content}"
+                    context_parts.append(part)
+                    used_count += 1
+                    
+                    self.logger.warning(
+                        f"Chunk {i} truncated to fit context limit. "
+                        f"(Used {slice_len} chars of content)"
+                    )
+                else:
+                    # サフィックスすら入らない、あるいはコンテンツがほぼ入らない場合は諦める
+                    self.logger.warning(f"Context full. Stopped before chunk {i}.")
+                
+                # 制限に達したので、これ以降のチャンクは処理せず終了
+                break
+
+        if not context_parts:
+            # 万が一、検索結果はあるが制限が厳しすぎて1つも入らなかった場合
+            return "関連情報は見つかりましたが、コンテキスト制限により内容を含められませんでした。", 0
+
+        final_text = "\n\n".join(context_parts)
+        return final_text, used_count
         
-        return "\n\n".join(context_parts)
     
     def _build_prompt(
         self,
-        system_prompt: str,
         context: str,
         question: str
     ) -> str:
-        """完全なプロンプトを構築"""
-        return f"""{system_prompt}
+        """
+        ユーザープロンプトの構築
+        ※System Instructionはモデル初期化時に設定済みのため、ここには含めない
+        """
+        return f"""以下の【コンテキスト情報】を使用して、【質問】に回答してください。
 
 【コンテキスト情報】
 {context}
 
 【質問】
 {question}
-
-【回答】
 """
