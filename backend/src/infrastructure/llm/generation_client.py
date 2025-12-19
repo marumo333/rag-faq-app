@@ -1,6 +1,6 @@
 import logging
 import os
-from typing import List, Optional
+from typing import List, Optional, Tuple
 import google.generativeai as genai
 from dotenv import load_dotenv
 
@@ -27,11 +27,16 @@ class GeminiGenerationClient:
             raise ValueError("GOOGLE_API_KEY is required")
         
         genai.configure(api_key=self.api_key)
+        
+        # システムプロンプトの準備
         base_system = system_instruction or self._get_default_system_prompt()
         self.system_instruction = base_system
         self.model_name = model
+        
+        # GenerativeModelの初期化
+        # ここで system_instruction を渡しているため、generate_content 時には不要です
         self.model = genai.GenerativeModel(
-            model=model,
+            model_name=model,
             system_instruction=base_system
         )
         self.logger = logger
@@ -43,28 +48,25 @@ class GeminiGenerationClient:
     ) -> dict:
         """
         質問に対してコンテキストを使用して回答を生成
-        
-        Args:
-            question: ユーザーの質問
-            context_chunks: 検索されたチャンクのリスト
-            
-        Returns:
-            dict: 回答テキストと使用したチャンク情報
         """
         try:
-            # コンテキストの整形
-            formatted_context = self._format_context(context_chunks)
+            # コンテキストの整形（実際に使用されたチャンク数を受け取る）
+            formatted_context, used_count = self._format_context(context_chunks)
             
             # プロンプトの構築
             prompt = self._build_prompt(
                 context=formatted_context,
                 question=question
             )
+            
+            # トークン数の見積もり
             tokens_info = self.model.count_tokens(prompt)
             input_tokens = tokens_info.total_tokens
+            
             self.logger.info(f"Estimated Input Tokens: {input_tokens}")
             self.logger.info(f"Generating answer for question: '{question}'")
-            self.logger.debug(f"Using {len(context_chunks)} context chunks")
+            # 検索ヒット数と、実際にコンテキストに入った数を分けてログ出力
+            self.logger.debug(f"Using {used_count} chunks (retrieved {len(context_chunks)})")
             
             # Gemini APIで回答生成
             response = self.model.generate_content(prompt)
@@ -76,7 +78,7 @@ class GeminiGenerationClient:
             return {
                 "answer": answer_text,
                 "model": self.model_name,
-                "chunks_used": len(context_chunks),
+                "chunks_used": used_count, # 実際に使用された数（監査用）
                 "input_tokens": input_tokens
             }
             
@@ -105,21 +107,19 @@ class GeminiGenerationClient:
 - 必要に応じて箇条書きを使用してください。
 """
     
-    def _format_context(self, chunks: List[dict], max_chars: int = 8000) -> str:
+    def _format_context(self, chunks: List[dict], max_chars: int = 8000) -> Tuple[str, int]:
         """
         チャンクリストをコンテキスト文字列に整形
-        
-        重複や矛盾を抑制するために：
-        - 類似度の高い順にソート済み
-        - セクション情報を含める
-        - チャンクIDを参照として保持
+        Returns:
+            Tuple[str, int]: (整形済みテキスト, 使用したチャンク数)
         """
         if not chunks:
-            return "関連情報が見つかりませんでした。"
+            return "関連情報が見つかりませんでした。", 0
         
-        context_parts:list[str] = []
+        context_parts: list[str] = []
         seen_content: set[str] = set()
         current_len = 0
+        used_count = 0
         
         for i, chunk in enumerate(chunks, start=1):
             content = chunk.get('content', '').strip()
@@ -134,17 +134,20 @@ class GeminiGenerationClient:
             section = chunk.get('metadata', {}).get('section') or '情報なし'
             part = f"[参考情報 {i}] (セクション: {section})\n{content}"
             
-            #追加後の長さを計算
+            # 追加後の長さを計算
             additional = len(part) + (2 if context_parts else 0) # 改行文を加味
 
-            # 文字数制限を超える場合は切り捨て
+            # 文字数制限を超える場合は切り捨ててループ終了
             if current_len + additional > max_chars:
+                self.logger.warning(f"Context truncated at chunk {i} (limit: {max_chars} chars)")
                 break
             
             context_parts.append(part)
             current_len += additional
+            used_count += 1
 
-        return "\n\n".join(context_parts) if context_parts else "関連情報が見つかりませんでした。"
+        final_text = "\n\n".join(context_parts) if context_parts else "関連情報が見つかりませんでした。"
+        return final_text, used_count
         
     
     def _build_prompt(
@@ -152,14 +155,15 @@ class GeminiGenerationClient:
         context: str,
         question: str
     ) -> str:
-        """完全なプロンプトを構築"""
-        return f"""{self.system_instruction}
+        """
+        ユーザープロンプトの構築
+        ※System Instructionはモデル初期化時に設定済みのため、ここには含めない
+        """
+        return f"""以下の【コンテキスト情報】を使用して、【質問】に回答してください。
 
 【コンテキスト情報】
 {context}
 
 【質問】
 {question}
-
-【回答】
 """
