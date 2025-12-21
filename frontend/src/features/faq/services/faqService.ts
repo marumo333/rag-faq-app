@@ -19,7 +19,6 @@ export interface AnswerResponse {
 }
 
 // Supabase Edge Function 経由で Python API の /answer を呼び出す
-// ローカル Supabase (supabase start) のデフォルトポート 54321 を想定
 const ANSWER_FUNCTION_URL = process.env.NEXT_PUBLIC_ANSWER_FUNCTION_URL;
 
 export const faqService = {
