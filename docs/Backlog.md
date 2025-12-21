@@ -15,8 +15,8 @@
 
 ## ラベル方針
 
-- 領域: `area:auth` `area:backend` `area:frontend` `area:ingest` `area:retrieval` `area:generation` `area:ops`
-- 種別: `type:backend` `type:frontend` `type:infra` `type:ai` `type:doc`
+- 領域: `area:auth` `area:backend` `area:frontend` `area:ingest` `area:retrieval` `area:generation` `area:ops` `area:generation` 
+- 種別: `type:backend` `type:frontend` `type:infra` `type:ai` `type:doc` `type:improvement`
 - 優先度: `prio:P0` `prio:P1`
 - サイズ: `size:S` `size:M` `size:L`
 
@@ -355,6 +355,51 @@
 
 * 対象ファイル: `backend-python/src/infrastructure/llm/generation_client.py`
 * ラベル: `area:generation`, `area:ops`, `type:improvement`, `prio:P0`, `size:S`
+
+---
+
+
+### [Bug] FAQ回答の出典カードに引用テキストが表示されない (No Citation Text)
+
+## 概要
+
+FAQ回答生成時、UI上の出典（引用）カードにおいて、検索スコア（類似度）は表示されるが、肝心の引用テキストが「引用テキスト情報がありません」と表示される。
+
+## 現象
+
+ユーザーが質問を行い、RAG回答が生成された際、出典元リストが以下のように表示される。
+
+**実際の表示:**
+
+> 出典 1
+> スコア 0.70
+> 引用テキスト情報がありません
+
+**期待される動作:**
+
+> 出典 1
+> スコア 0.70
+> [ここにチャンクの具体的なテキスト内容が表示されること]
+
+## 原因の仮説 (要調査)
+
+`ARCHITECTURE.md` のデータフローに基づくと、以下のいずれかでデータが脱落している可能性がある。
+
+1. **Backend (`infrastructure/repositories/`)**: pgvector 検索時の SQL クエリで、`content` (チャンクのテキスト本文) カラムを `SELECT` していない、または取得漏れがある。
+2. **Backend (`interface/http/api.py`)**: API のレスポンスモデル（Pydantic）において、テキストフィールド名が定義と一致していない（例: DB側が `chunk_text` で API定義が `text` など）。
+3. **Frontend (`features/faq/types.ts`)**: バックエンドから送られてくる JSON のフィールド名と、フロントエンドの型定義プロパティ名が不一致を起こしている。
+
+## 再現手順
+
+1. 任意のPDFをアップロードし、Ingestを完了させる。
+2. FAQ画面で、そのドキュメントに関連する質問を入力する。
+3. 回答生成後の出典エリアを確認する。
+
+## 影響範囲
+
+ユーザーは回答の根拠を確認できず、ハルシネーション（嘘の回答）かどうかの判断がつかないため、サービスの信頼性に関わる重大なバグ。
+
+**ラベル:** `type:bug` `area:frontend` `area:backend` `prio:P0`
 
 ---
 
