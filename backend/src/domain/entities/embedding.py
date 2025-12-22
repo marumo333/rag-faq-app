@@ -31,14 +31,14 @@ class Embedding:
 @dataclass
 class SearchResult:
     """検索結果エンティティ"""
-    
+
     chunk_id: UUID
     document_id: UUID
     content: str
-    document_title: str
-    position: Optional[int] = None
     score: float
     metadata: dict
+    document_title: Optional[str] = None
+    position: Optional[int] = None
     
     def to_dict(self) -> dict:
         """辞書に変換"""

@@ -28,6 +28,8 @@ class SourceInfo(BaseModel):
     section: Optional[str]
     score: float
     content: str
+    document_title: Optional[str]
+    position: Optional[int]
 
 
 class AnswerResponse(BaseModel):
@@ -65,7 +67,9 @@ async def generate_answer(request: AnswerRequest):
                 document_id=src['document_id'],
                 section=src.get('section'),
                 score=src.get('score', 0.0),
-                content=src.get('content', '')
+                content=src.get('content', ''),
+                document_title=src.get('document_title'),
+                position=src.get('position'),
             )
             for src in result['sources']
         ]
