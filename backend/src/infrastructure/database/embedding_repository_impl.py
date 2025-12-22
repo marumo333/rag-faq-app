@@ -100,6 +100,8 @@ class SupabaseEmbeddingRepository(EmbeddingRepository):
                 chunk_id=UUID(data['chunk_id']),
                 document_id=UUID(data['document_id']),
                 content=data['content'],
+                document_title=data.get['document_title'],
+                position=data.get['position'],
                 score=float(data['similarity']),
                 metadata=data.get('metadata', {})
             ))
