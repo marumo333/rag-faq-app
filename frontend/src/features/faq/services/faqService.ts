@@ -14,7 +14,6 @@ export interface AnswerResponse {
     document_id: string;
     section: string | null;
     score: number;
-    content: string;
   }>;
   elapsed_time: number;
 }
