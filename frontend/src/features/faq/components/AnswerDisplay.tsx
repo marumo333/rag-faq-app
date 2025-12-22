@@ -34,20 +34,30 @@ export function AnswerDisplay({ answer }: AnswerDisplayProps) {
           引用された箇所
         </h4>
         <div className="space-y-2">
-          {answer.sources.map((source, index) => (
+          {(answer.sources || []).map((source, index) => (
             <div
               key={index}
               className="rounded-md bg-amber-900/30 border border-amber-700/60 px-3 py-2 text-xs text-amber-50"
             >
               <div className="flex items-center justify-between mb-1">
-                <span className="font-semibold">出典 {index + 1}</span>
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold">出典 {index + 1}</span>
+                  {source.document_title && (
+                    <span className="text-[10px] text-gray-400">
+                      {source.document_title}
+                    </span>
+                  )}
+                  {source.position !== null &&
+                    source.position !== undefined && (
+                      <span className="text-[10px] text-gray-400">
+                        ページ: {source.position}
+                      </span>
+                    )}
+                </div>
                 <span className="text-[10px] text-amber-200">
                   スコア {source.score.toFixed(2)}
                 </span>
               </div>
-              <p className="whitespace-pre-wrap">
-                {source.content || "引用テキスト情報がありません"}
-              </p>
             </div>
           ))}
         </div>

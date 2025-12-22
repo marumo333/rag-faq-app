@@ -35,6 +35,8 @@ class SearchResult:
     chunk_id: UUID
     document_id: UUID
     content: str
+    document_title: str
+    position: int
     score: float
     metadata: dict
     
@@ -44,6 +46,8 @@ class SearchResult:
             "chunk_id": str(self.chunk_id),
             "document_id": str(self.document_id),
             "content": self.content,
+            "document_title": self.document_title,
+            "position": self.position,
             "score": self.score,
             "metadata": self.metadata,
         }

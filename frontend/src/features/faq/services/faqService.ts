@@ -15,6 +15,8 @@ export interface AnswerResponse {
     section: string | null;
     score: number;
     content: string;
+    document_title: string;
+    position: number;
   }>;
   elapsed_time: number;
 }

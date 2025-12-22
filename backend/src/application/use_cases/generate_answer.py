@@ -131,7 +131,9 @@ class GenerateAnswerUseCase:
                     "document_id": doc_id,
                     "section": metadata.get('section'),
                     "score": chunk.get('score'),
-                    "content": chunk.get('content')
+                    "content": chunk.get('content'),
+                    "document_title": chunk.get('document_title'),
+                    "position": chunk.get('position'),
                 })
         
         return sources
