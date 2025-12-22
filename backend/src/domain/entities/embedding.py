@@ -36,7 +36,7 @@ class SearchResult:
     document_id: UUID
     content: str
     document_title: str
-    position: int
+    position: Optional[int] = None
     score: float
     metadata: dict
     
