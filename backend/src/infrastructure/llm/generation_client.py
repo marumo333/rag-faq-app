@@ -1,7 +1,7 @@
 import logging
 import os
-from typing import List, Optional, Tuple
-import google.generativeai as genai
+from typing import Any, Dict, List, Optional, Tuple
+import google.generativeai as genai  # type: ignore[import-untyped,attr-defined]
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -44,8 +44,8 @@ class GeminiGenerationClient:
     def generate_answer(
         self,
         question: str,
-        context_chunks: List[dict]
-    ) -> dict:
+        context_chunks: List[Dict[str, Any]]
+    ) -> Dict[str, Any]:
         """
         質問に対してコンテキストを使用して回答を生成
         """
@@ -107,7 +107,7 @@ class GeminiGenerationClient:
 - 必要に応じて箇条書きを使用してください。
 """
     
-    def _format_context(self, chunks: List[dict], max_chars: int = 8000) -> Tuple[str, int]:
+    def _format_context(self, chunks: List[Dict[str, Any]], max_chars: int = 8000) -> Tuple[str, int]:
         """
         チャンクリストをコンテキスト文字列に整形（文字数制限で切り詰め）
         Returns:

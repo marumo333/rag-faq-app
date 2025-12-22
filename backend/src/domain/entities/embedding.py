@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from datetime import datetime
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 from uuid import UUID
 
 
@@ -14,7 +14,7 @@ class Embedding:
     model: str
     created_at: Optional[datetime] = None
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.created_at is None:
             self.created_at = datetime.utcnow()
     
@@ -36,11 +36,11 @@ class SearchResult:
     document_id: UUID
     content: str
     score: float
-    metadata: dict
+    metadata: Dict[str, Any]
     document_title: Optional[str] = None
     position: Optional[int] = None
     
-    def to_dict(self) -> dict:
+    def to_dict(self) -> Dict[str, Any]:
         """辞書に変換"""
         return {
             "chunk_id": str(self.chunk_id),

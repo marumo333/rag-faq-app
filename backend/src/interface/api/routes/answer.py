@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 from uuid import UUID
 
 from application.use_cases.generate_answer import GenerateAnswerUseCase
@@ -45,7 +45,7 @@ class AnswerResponse(BaseModel):
 
 
 @router.post("/answer", response_model=AnswerResponse)
-async def generate_answer(request: AnswerRequest):
+async def generate_answer(request: AnswerRequest) -> AnswerResponse:
     """
     RAG回答生成エンドポイント
     
@@ -92,7 +92,7 @@ async def generate_answer(request: AnswerRequest):
 
 
 @router.get("/answer/health")
-async def answer_health():
+async def answer_health() -> Dict[str, str]:
     """回答生成機能のヘルスチェック"""
     return {
         "status": "ok",

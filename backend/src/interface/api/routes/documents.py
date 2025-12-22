@@ -1,4 +1,5 @@
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException
+from typing import Any, Dict
 from uuid import UUID
 import tempfile
 import os
@@ -28,7 +29,7 @@ async def upload_document(
     file: UploadFile = File(...),
     tenant_id: str | None = Form(None),
     title: str | None = Form(None),
-):
+) -> Dict[str, Any]:
     """
     PDFをアップロードして取り込み（ingest）を実行するエンドポイント。
     - file: PDFファイル

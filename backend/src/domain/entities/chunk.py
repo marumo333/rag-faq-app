@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Optional
+from typing import Any, Dict, Optional
 from uuid import UUID
 
 
@@ -17,11 +17,11 @@ class Chunk:
     chunk_index: int = 0
     created_at: Optional[datetime] = None
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.created_at is None:
             self.created_at = datetime.utcnow()
     
-    def get_metadata(self) -> dict:
+    def get_metadata(self) -> Dict[str, Any]:
         """チャンクのメタデータを取得"""
         return {
             "chunk_id": str(self.id),

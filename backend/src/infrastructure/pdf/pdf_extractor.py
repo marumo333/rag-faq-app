@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 class PDFExtractor:
     """PDFからテキストを抽出するクラス"""
     
-    def __init__(self):
+    def __init__(self) -> None:
         self.logger = logger
     
     def extract_text(self, file_path: str) -> str:

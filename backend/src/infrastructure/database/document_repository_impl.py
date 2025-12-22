@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Any, Dict, List, Optional, cast
 from uuid import UUID
 from supabase import Client
 
@@ -10,7 +10,7 @@ from domain.repositories.document_repository import DocumentRepository
 class SupabaseDocumentRepository(DocumentRepository):
     """Supabaseを使用したドキュメントリポジトリの実装"""
     
-    def __init__(self, supabase_client: Client):
+    def __init__(self, supabase_client: Client) -> None:
         self.client = supabase_client
     
     async def create(self, document: Document) -> Document:
@@ -35,7 +35,9 @@ class SupabaseDocumentRepository(DocumentRepository):
             return None
         
         data = response.data[0]
-        return self._map_to_document(data)
+        if not isinstance(data, dict):
+            return None
+        return self._map_to_document(cast(Dict[str, Any], data))
     
     async def update(self, document: Document) -> Document:
         """ドキュメントを更新"""
@@ -58,7 +60,11 @@ class SupabaseDocumentRepository(DocumentRepository):
         """テナントのドキュメント一覧を取得"""
         response = self.client.table('documents').select('*').eq('tenant_id', str(tenant_id)).execute()
         
-        return [self._map_to_document(data) for data in response.data]
+        return [
+            self._map_to_document(cast(Dict[str, Any], data))
+            for data in response.data
+            if isinstance(data, dict)
+        ]
     
     async def save_chunks(self, chunks: List[Chunk]) -> List[Chunk]:
         """チャンクを保存"""
@@ -82,9 +88,13 @@ class SupabaseDocumentRepository(DocumentRepository):
             'document_id', str(document_id)
         ).order('position').execute()
         
-        return [self._map_to_chunk(data) for data in response.data]
+        return [
+            self._map_to_chunk(cast(Dict[str, Any], data))
+            for data in response.data
+            if isinstance(data, dict)
+        ]
     
-    def _map_to_document(self, data: dict) -> Document:
+    def _map_to_document(self, data: Dict[str, Any]) -> Document:
         """データベースレコードをDocumentエンティティに変換"""
         from datetime import datetime
         from uuid import UUID
@@ -99,7 +109,7 @@ class SupabaseDocumentRepository(DocumentRepository):
             updated_at=datetime.fromisoformat(data['updated_at'].replace('Z', '+00:00')) if data.get('updated_at') else None,
         )
     
-    def _map_to_chunk(self, data: dict) -> Chunk:
+    def _map_to_chunk(self, data: Dict[str, Any]) -> Chunk:
         """データベースレコードをChunkエンティティに変換"""
         from datetime import datetime
         from uuid import UUID

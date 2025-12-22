@@ -26,7 +26,7 @@ class IngestDocumentUseCase:
         pdf_extractor: Optional[PDFExtractor] = None,
         chunk_splitter: Optional[ChunkSplitter] = None,
         embedding_client: Optional[GeminiEmbeddingClient] = None
-    ):
+    ) -> None:
         self.document_repository = document_repository
         self.embedding_repository = embedding_repository
         self.pdf_extractor = pdf_extractor or PDFExtractor()
