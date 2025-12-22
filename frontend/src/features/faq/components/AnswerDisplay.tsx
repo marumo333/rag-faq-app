@@ -46,7 +46,7 @@ export function AnswerDisplay({ answer }: AnswerDisplayProps) {
                 </span>
               </div>
               <p className="whitespace-pre-wrap">
-                {source.section || "引用テキスト情報がありません"}
+                {source.content || "引用テキスト情報がありません"}
               </p>
             </div>
           ))}

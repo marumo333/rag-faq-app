@@ -130,7 +130,8 @@ class GenerateAnswerUseCase:
                 sources.append({
                     "document_id": doc_id,
                     "section": metadata.get('section'),
-                    "score": chunk.get('score')
+                    "score": chunk.get('score'),
+                    "content": chunk.get('content')
                 })
         
         return sources
