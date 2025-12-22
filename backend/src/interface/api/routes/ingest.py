@@ -1,5 +1,6 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
+from typing import Any, Dict
 from uuid import UUID
 
 from application.use_cases.ingest_document import IngestDocumentUseCase
@@ -35,7 +36,7 @@ class IngestResponse(BaseModel):
 
 
 @router.post("/ingest", response_model=IngestResponse)
-async def ingest_document(request: IngestRequest):
+async def ingest_document(request: IngestRequest) -> IngestResponse:
     """
     ドキュメント取り込みエンドポイント（本番実装）
     
@@ -67,7 +68,7 @@ async def ingest_document(request: IngestRequest):
 
 
 @router.get("/ingest/{document_id}")
-async def get_document_status(document_id: str):
+async def get_document_status(document_id: str) -> Dict[str, Any]:
     """ドキュメント処理状況の取得"""
     try:
         doc_uuid = UUID(document_id)

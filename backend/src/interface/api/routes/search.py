@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, Field
-from typing import List
+from typing import Any, Dict, List
 from uuid import UUID
 
 from application.use_cases.search_chunks import SearchChunksUseCase
@@ -28,7 +28,7 @@ class ChunkResult(BaseModel):
     document_id: str
     content: str
     score: float = Field(..., description="類似度スコア（0-1、高いほど類似）")
-    metadata: dict
+    metadata: Dict[str, Any]
 
 
 class SearchResponse(BaseModel):
@@ -42,7 +42,7 @@ class SearchResponse(BaseModel):
 
 
 @router.post("/search", response_model=SearchResponse)
-async def search_chunks(request: SearchRequest):
+async def search_chunks(request: SearchRequest) -> SearchResponse:
     """
     ベクトル類似度検索エンドポイント
     
@@ -86,7 +86,7 @@ async def search_chunks(request: SearchRequest):
 
 
 @router.get("/search/health")
-async def search_health():
+async def search_health() -> Dict[str, str]:
     """検索機能のヘルスチェック"""
     return {
         "status": "ok",

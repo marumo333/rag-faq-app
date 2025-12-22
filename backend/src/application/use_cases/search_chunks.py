@@ -1,6 +1,6 @@
 import logging
 import time
-from typing import List
+from typing import Any, Dict, List, Optional
 from uuid import UUID
 
 from domain.entities.embedding import SearchResult
@@ -16,8 +16,8 @@ class SearchChunksUseCase:
     def __init__(
         self,
         embedding_repository: EmbeddingRepository,
-        embedding_client: GeminiEmbeddingClient = None
-    ):
+        embedding_client: Optional[GeminiEmbeddingClient] = None
+    ) -> None:
         self.embedding_repository = embedding_repository
         self.embedding_client = embedding_client or GeminiEmbeddingClient()
         self.logger = logger
@@ -27,7 +27,7 @@ class SearchChunksUseCase:
         query: str,
         tenant_id: UUID,
         limit: int = 5
-    ) -> dict:
+    ) -> Dict[str, Any]:
         """
         質問クエリから類似チャンクを検索
         

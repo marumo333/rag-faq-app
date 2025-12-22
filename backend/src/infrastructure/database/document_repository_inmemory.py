@@ -8,7 +8,7 @@ from domain.repositories.document_repository import DocumentRepository
 class InMemoryDocumentRepository(DocumentRepository):
     """インメモリドキュメントリポジトリ（テスト用）"""
     
-    def __init__(self):
+    def __init__(self) -> None:
         self._documents: Dict[UUID, Document] = {}
         self._chunks: Dict[UUID, Chunk] = {}
     

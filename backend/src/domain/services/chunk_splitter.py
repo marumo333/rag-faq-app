@@ -47,7 +47,7 @@ class ChunkSplitter:
         sections = self._split_by_sections(text)
         
         # 各セクションをさらに細かく分割
-        chunks = []
+        chunks: List[Chunk] = []
         for section_title, section_text in sections:
             section_chunks = self._split_text(
                 document_id=document_id,
@@ -78,9 +78,9 @@ class ChunkSplitter:
         combined_pattern = '|'.join(f'({p})' for p in heading_patterns)
         
         lines = text.split('\n')
-        sections = []
-        current_section = None
-        current_text = []
+        sections: List[tuple[Optional[str], str]] = []
+        current_section: Optional[str] = None
+        current_text: List[str] = []
         
         for line in lines:
             line = line.strip()
@@ -135,12 +135,12 @@ class ChunkSplitter:
         Returns:
             List[Chunk]: チャンクのリスト
         """
-        chunks = []
+        chunks: List[Chunk] = []
         
         # 段落で分割
         paragraphs = [p.strip() for p in text.split('\n\n') if p.strip()]
         
-        current_chunk_text = []
+        current_chunk_text: List[str] = []
         current_length = 0
         
         for para in paragraphs:
@@ -210,8 +210,8 @@ class ChunkSplitter:
         """大きな段落を文単位で分割"""
         sentences = re.split(r'([。！？\n])', text)
         
-        chunks = []
-        current = []
+        chunks: List[str] = []
+        current: List[str] = []
         current_length = 0
         
         for i in range(0, len(sentences), 2):

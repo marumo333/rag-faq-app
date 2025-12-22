@@ -1,6 +1,6 @@
 import logging
 import time
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 from uuid import UUID
 
 from application.use_cases.search_chunks import SearchChunksUseCase
@@ -19,7 +19,7 @@ class GenerateAnswerUseCase:
         embedding_repository: EmbeddingRepository,
         embedding_client: Optional[GeminiEmbeddingClient] = None,
         generation_client: Optional[GeminiGenerationClient] = None
-    ):
+    ) -> None:
         self.search_use_case = SearchChunksUseCase(
             embedding_repository=embedding_repository,
             embedding_client=embedding_client
@@ -32,7 +32,7 @@ class GenerateAnswerUseCase:
         question: str,
         tenant_id: UUID,
         top_k: int = 5
-    ) -> dict:
+    ) -> Dict[str, Any]:
         """
         質問に対してRAG回答を生成
         
@@ -116,7 +116,7 @@ class GenerateAnswerUseCase:
             self.logger.error(f"Answer generation failed: {e}", exc_info=True)
             raise
     
-    def _extract_sources(self, chunks: List[dict]) -> List[dict]:
+    def _extract_sources(self, chunks: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """チャンクから参照元情報を抽出"""
         sources = []
         seen_documents = set()

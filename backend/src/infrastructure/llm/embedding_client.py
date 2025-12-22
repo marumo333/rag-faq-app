@@ -1,7 +1,7 @@
 import logging
 import os
-from typing import List, Optional
-import google.generativeai as genai
+from typing import Any, Dict, List, Optional
+import google.generativeai as genai  # type: ignore[import-untyped,attr-defined]
 from dotenv import load_dotenv
 
 load_dotenv()

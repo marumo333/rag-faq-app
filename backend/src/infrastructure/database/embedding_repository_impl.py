@@ -1,5 +1,5 @@
 import logging
-from typing import List, Optional
+from typing import Any, Dict, List, Optional, cast
 from uuid import UUID
 from supabase import Client
 
@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 class SupabaseEmbeddingRepository(EmbeddingRepository):
     """Supabaseを使用した埋め込みリポジトリの実装"""
     
-    def __init__(self, supabase_client: Client):
+    def __init__(self, supabase_client: Client) -> None:
         self.client = supabase_client
         self.logger = logger
     
@@ -34,7 +34,7 @@ class SupabaseEmbeddingRepository(EmbeddingRepository):
         self.logger.info(f"Saving {len(embeddings)} embeddings to database")
         
         # バルクINSERT用のデータ準備
-        embedding_data = []
+        embedding_data: List[Dict[str, Any]] = []
         for emb in embeddings:
             embedding_data.append({
                 'id': str(emb.id),
@@ -46,7 +46,7 @@ class SupabaseEmbeddingRepository(EmbeddingRepository):
         batch_size = 100
         for i in range(0, len(embedding_data), batch_size):
             batch = embedding_data[i:i + batch_size]
-            self.client.table('faq_embeddings').insert(batch).execute()
+            self.client.table('faq_embeddings').insert(batch).execute()  # type: ignore[arg-type]
             self.logger.info(f"Saved batch {i//batch_size + 1} ({len(batch)} embeddings)")
         
         self.logger.info(f"Successfully saved {len(embeddings)} embeddings")
@@ -62,7 +62,9 @@ class SupabaseEmbeddingRepository(EmbeddingRepository):
             return None
         
         data = response.data[0]
-        return self._map_to_embedding(data)
+        if not isinstance(data, dict):
+            return None
+        return self._map_to_embedding(cast(Dict[str, Any], data))
     
     async def search_similar(
         self,
@@ -94,16 +96,30 @@ class SupabaseEmbeddingRepository(EmbeddingRepository):
             }
         ).execute()
         
-        results = []
-        for data in response.data:
+        results: List[SearchResult] = []
+        if not response.data or not isinstance(response.data, list):
+            return results
+            
+        for item in response.data:
+            if not isinstance(item, dict):
+                continue
+            data = cast(Dict[str, Any], item)
+            chunk_id_str = data.get('chunk_id')
+            document_id_str = data.get('document_id')
+            similarity = data.get('similarity')
+            content = data.get('content', '')
+            
+            if not chunk_id_str or not document_id_str or similarity is None:
+                continue
+                
             results.append(SearchResult(
-                chunk_id=UUID(data['chunk_id']),
-                document_id=UUID(data['document_id']),
-                content=data['content'],
-                document_title=data.get['document_title'],
-                position=data.get['position'],
-                score=float(data['similarity']),
-                metadata=data.get('metadata', {})
+                chunk_id=UUID(str(chunk_id_str)),
+                document_id=UUID(str(document_id_str)),
+                content=str(content),
+                document_title=data.get('document_title'),
+                position=data.get('position'),
+                score=float(similarity),
+                metadata=cast(Dict[str, Any], data.get('metadata', {}))
             ))
         
         return results
@@ -118,7 +134,12 @@ class SupabaseEmbeddingRepository(EmbeddingRepository):
         if not chunks_response.data:
             return False
         
-        chunk_ids = [chunk['id'] for chunk in chunks_response.data]
+        chunk_ids: List[str] = []
+        for chunk in chunks_response.data:
+            if isinstance(chunk, dict):
+                chunk_id = chunk.get('id')
+                if chunk_id:
+                    chunk_ids.append(str(chunk_id))
         
         # 埋め込みを削除
         for chunk_id in chunk_ids:
@@ -129,7 +150,7 @@ class SupabaseEmbeddingRepository(EmbeddingRepository):
         self.logger.info(f"Deleted embeddings for {len(chunk_ids)} chunks")
         return True
     
-    def _map_to_embedding(self, data: dict) -> Embedding:
+    def _map_to_embedding(self, data: Dict[str, Any]) -> Embedding:
         """データベースレコードをEmbeddingエンティティに変換"""
         from datetime import datetime
         

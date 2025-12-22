@@ -1,6 +1,6 @@
 import logging
 import time
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 from uuid import UUID, uuid4
 
 from domain.entities.embedding import Embedding
@@ -19,13 +19,13 @@ class GenerateEmbeddingsUseCase:
         document_repository: DocumentRepository,
         embedding_repository: EmbeddingRepository,
         embedding_client: Optional[GeminiEmbeddingClient] = None
-    ):
+    ) -> None:
         self.document_repository = document_repository
         self.embedding_repository = embedding_repository
         self.embedding_client = embedding_client or GeminiEmbeddingClient()
         self.logger = logger
     
-    async def execute(self, document_id: UUID) -> dict:
+    async def execute(self, document_id: UUID) -> Dict[str, Any]:
         """
         ドキュメントのチャンクに対して埋め込みを生成
         
