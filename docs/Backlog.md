@@ -401,10 +401,57 @@ FAQ回答生成時、UI上の出典（引用）カードにおいて、検索ス
 
 **ラベル:** `type:bug` `area:frontend` `area:backend` `prio:P0`
 
----
-
-
 ## 参考
 
 - 既存PoC用 Backlog (実現可能性推定アプリ) の構成・ラベル付けを流用。:contentReference[oaicite:2]{index=2}  
+
+---
+
+### [M3][P0][OPS/BE] Stripe従量課金 & 利用制限 (High Cost Model)
+
+**目的**: 1アクション原価 $0.25 を回収し、持続的な収益を上げるための課金基盤を導入する。原価が高いため、無料枠と定額枠を厳格に制限する。
+
+**価格設定 (Ver1.0)**:
+- **Free**: 月間 **3回** まで (お試し)
+- **Standard**: 月額 **1,000円** で **15回** まで (単価 約66円)
+- **Overage**: 上限到達時は停止。追加チケット **10回分を 700円** で購入 (単価 70円)
+
+**完了条件**:
+- [ ] 質問/DL実行時に `usage_logs` をチェックし、上限到達時に 402 エラーを返すガード処理が稼働
+- [ ] フロントエンドから Stripe Checkout へ遷移し、Standardプラン加入またはチケット購入ができる
+- [ ] Stripe Webhook を受信し、DBの `subscriptions` や `quota` が即座に更新される
+- [ ] 月次バッチ（またはStripeの期間更新イベント）で利用回数がリセットされる
+
+**タスク**:
+- [ ] **DB設計**:
+  - `user_quotas`: `user_id`, `plan_type`, `remaining_count`, `reset_date`
+  - `transactions`: 購入履歴・Stripe Session ID
+- [ ] **Backend**:
+  - Middleware または Decorator で `check_quota(user_id)` を実装
+  - Stripe Webhook ハンドラー (`checkout.session.completed`, `invoice.payment_succeeded`)
+- [ ] **Frontend**:
+  - 「残り回数」の常時表示コンポーネント
+  - 課金モーダル (Free/Standard/Ticket 選択)
+
+**ラベル**: `area:ops` `area:backend` `type:infra` `prio:P0` `size:L`
+
+---
+
+## M4: コスト最適化 & 品質向上 (Post-MVP)
+
+### [M4][P1][AI/BE] RAG原価低減 & キャッシュ戦略
+
+**目的**: 現在の 1回 $0.25 という高額な原価を圧縮し、利益率を改善する。
+
+**完了条件**:
+- 同一の質問に対しては LLM を呼び出さず、キャッシュから回答する (原価 $0)
+- 難易度の低い質問は安価なモデル (GPT-4o mini / Gemini Flash) にルーティングされる
+- 原価が平均 $0.10 以下に抑制されている
+
+**タスク**:
+- [ ] **Semantic Cache**: Redis/pgvector を使い、過去の質問と類似度が高い場合はキャッシュ回答を返却
+- [ ] **LLM Router**: 質問を分類し、モデルを動的に切り替えるロジック実装
+- [ ] **Prompt Optimization**: 入力トークン数を削減 (チャンク数の絞り込み top-k: 5 -> 3 など)
+
+**ラベル**: `area:ai` `area:backend` `type:backend` `prio:P1` `size:M`
 
